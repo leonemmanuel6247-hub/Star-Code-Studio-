@@ -24,6 +24,16 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
   const [sheetUrl, setSheetUrl] = useState('');
   const [previewData, setPreviewData] = useState<any[]>([]);
 
+  const transformToExportUrl = (url: string) => {
+    let cleanUrl = url.trim();
+    if (cleanUrl.includes('/edit')) {
+      return cleanUrl.replace(/\/edit.*$/, '/export?format=csv');
+    } else if (cleanUrl.includes('docs.google.com') && !cleanUrl.includes('/export')) {
+      return cleanUrl.replace(/\/$/, '') + '/export?format=csv';
+    }
+    return cleanUrl;
+  };
+
   const parseCSV = (text: string) => {
     const lines = text.split(/\r?\n/);
     return lines.map(line => {
@@ -47,13 +57,7 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
     if (!sheetUrl.trim()) return;
     setIsLoadingData(true);
     try {
-      let exportUrl = sheetUrl.trim();
-      if (exportUrl.includes('/edit')) {
-        exportUrl = exportUrl.replace(/\/edit.*$/, '/export?format=csv');
-      } else if (exportUrl.includes('docs.google.com') && !exportUrl.includes('export?')) {
-        exportUrl += (exportUrl.endsWith('/') ? '' : '/') + 'export?format=csv';
-      }
-      
+      const exportUrl = transformToExportUrl(sheetUrl);
       const response = await fetch(exportUrl);
       if (!response.ok) throw new Error("Accès refusé");
       const csvText = await response.text();
@@ -66,7 +70,7 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
       setPreviewData(rows.filter(r => r.title));
       setIsConnected(true);
     } catch (e) {
-      alert("Erreur Cloud : Vérifiez le partage de votre Google Sheets.");
+      alert("Erreur de liaison : Assurez-vous que votre fichier est bien 'Publié sur le Web' (Fichier > Partager > Publier sur le Web) et que l'URL est correcte.");
     } finally {
       setIsLoadingData(false);
     }
@@ -75,26 +79,31 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
   const handleClone = async () => {
     setIsExporting(true);
     const zip = new JSZip();
+    const finalExportUrl = transformToExportUrl(sheetUrl);
 
     const cssContent = `
       :root { --primary: ${siteConfig.primaryColor}; --bg: #020617; --card: rgba(15, 23, 42, 0.7); }
       * { box-sizing: border-box; }
-      body { background: var(--bg); color: #f1f5f9; font-family: 'Space Grotesk', sans-serif; margin: 0; line-height: 1.6; }
+      body { background: var(--bg); color: #f1f5f9; font-family: 'Space Grotesk', sans-serif; margin: 0; line-height: 1.6; overflow-x: hidden; }
       .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
       .glass { background: var(--card); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2.5rem; }
       .neon-text { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
       .btn-polaris { 
         background: var(--primary); color: white; padding: 1.2rem 2.5rem; border-radius: 1.5rem; 
         font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.8rem;
-        transition: 0.4s; border: none; cursor: pointer; text-transform: uppercase;
+        transition: 0.4s; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em;
       }
+      .btn-polaris:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); opacity: 0.9; }
       .nav { padding: 2.5rem 0; display: flex; justify-content: space-between; align-items: center; }
-      .nav-links a { text-decoration: none; color: #64748b; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; margin-left: 2rem; }
+      .nav-links a { text-decoration: none; color: #64748b; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; margin-left: 2rem; transition: 0.3s; }
+      .nav-links a:hover { color: var(--primary); }
       .hero { padding: 8rem 0; text-align: center; }
-      .hero h1 { font-size: 4.5rem; font-weight: 900; margin-bottom: 2rem; line-height: 1; }
-      .resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
-      .card { padding: 2.5rem; display: flex; flex-direction: column; transition: 0.4s; height: 100%; }
-      .card-tag { font-size: 0.7rem; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 1rem; }
+      .hero h1 { font-size: 4.5rem; font-weight: 900; margin-bottom: 2rem; line-height: 1.1; }
+      .resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; padding-bottom: 5rem; }
+      .card { padding: 2.5rem; display: flex; flex-direction: column; transition: 0.4s; height: 100%; position: relative; overflow: hidden; }
+      .card:hover { border-color: var(--primary); transform: translateY(-5px); }
+      .card-tag { font-size: 0.7rem; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.2em; }
+      .error-msg { padding: 3rem; text-align: center; border: 1px dashed rgba(255,0,0,0.3); border-radius: 2rem; color: #ef4444; background: rgba(239, 68, 68, 0.05); }
     `;
 
     const homeHTML = `<!DOCTYPE html>
@@ -139,31 +148,67 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
             <p style="color: #64748b;">Espace de ressources géré par ${user?.firstName}.</p>
         </header>
         <div id="grid" class="resource-grid">
-            <div style="grid-column: 1/-1; text-align: center; padding: 10rem; opacity: 0.3;">INITIALISATION...</div>
+            <div id="loading" style="grid-column: 1/-1; text-align: center; padding: 10rem; opacity: 0.5;">INITIALISATION DES DONNÉES...</div>
         </div>
     </div>
     <script>
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else current += char;
+            }
+            result.push(current);
+            return result;
+        }
+
         async function loadData() {
-            const url = "${sheetUrl.includes('/export?') ? sheetUrl : (sheetUrl.replace(/\/edit.*$/, '') + '/export?format=csv')}";
+            const url = "${finalExportUrl}";
+            const container = document.getElementById('grid');
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("CORS_OR_NOT_FOUND");
+                
                 const csv = await res.text();
-                const container = document.getElementById('grid');
-                const rows = csv.split(/\\r?\\n/).slice(1);
-                container.innerHTML = rows.map(line => {
-                    const c = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if(!c[0] || c[0].trim() === "") return '';
-                    const title = c[0].replace(/^"|"$/g, '').trim();
-                    const link = c[1]?.replace(/^"|"$/g, '').trim() || '#';
-                    const tag = c[2]?.replace(/^"|"$/g, '').trim() || 'DOCUMENT';
-                    return \`<div class="glass card">
+                const lines = csv.split(/\\r?\\n/);
+                const rows = lines.slice(1);
+                
+                let html = '';
+                rows.forEach(line => {
+                    if (!line.trim()) return;
+                    const c = parseCSVLine(line);
+                    const title = (c[0] || '').replace(/^"|"$/g, '').trim();
+                    if (!title) return;
+                    
+                    const link = (c[1] || '').replace(/^"|"$/g, '').trim() || '#';
+                    const tag = (c[2] || '').replace(/^"|"$/g, '').trim() || 'RESSOURCE';
+                    
+                    html += \`<div class="glass card">
                         <div class="card-tag">\${tag}</div>
                         <h3 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 2.5rem; flex: 1;">\${title}</h3>
-                        <a href="\${link}" target="_blank" class="btn-polaris" style="padding: 0.8rem; font-size: 0.7rem; justify-content: center;">CONSULTER</a>
+                        <a href="\${link}" target="_blank" class="btn-polaris" style="padding: 1rem; font-size: 0.7rem; justify-content: center;">CONSULTER</a>
                     </div>\`;
-                }).join('');
+                });
+
+                if (html === '') {
+                    container.innerHTML = '<div class="error-msg">Aucune donnée trouvée dans la feuille Google Sheets.</div>';
+                } else {
+                    container.innerHTML = html;
+                }
             } catch(e) { 
-                document.getElementById('grid').innerHTML = '<p>Erreur de chargement des données.</p>';
+                console.error("Erreur Polaris :", e);
+                container.innerHTML = \`<div class="error-msg" style="grid-column: 1/-1;">
+                    <h3 style="margin-bottom: 1rem; font-weight: 900;">ERREUR DE LIAISON</h3>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">Impossible de récupérer les données.</p>
+                    <p style="font-size: 0.8rem; margin-top: 1.5rem;">Vérifiez que votre Google Sheets est bien <b>"Publié sur le Web"</b> :<br/>
+                    (Fichier > Partager > Publier sur le Web > Publier)</p>
+                </div>\`;
             }
         }
         loadData();
@@ -174,7 +219,7 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
     zip.file("index.html", homeHTML);
     zip.file("bibliotheque.html", libHTML);
     zip.file("style.css", cssContent);
-    zip.file("POLARIS_IDENTITE.txt", `Cloné par : ${user?.firstName} ${user?.lastName}\nSource : SuccessPolaris Builder`);
+    zip.file("POLARIS_IDENTITE.txt", `Cloné par : ${user?.firstName} ${user?.lastName}\nSource : SuccessPolaris Builder\nDate : ${new Date().toLocaleDateString()}`);
     
     const blob = await zip.generateAsync({ type: "blob" });
     const url = window.URL.createObjectURL(blob);
@@ -207,33 +252,39 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
                   type="text" 
                   value={siteConfig.title}
                   onChange={(e) => setSiteConfig({...siteConfig, title: e.target.value})}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:border-cyan-500/50 outline-none"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:border-cyan-500/50 outline-none transition-all"
                 />
                 <textarea 
                   value={siteConfig.description}
                   onChange={(e) => setSiteConfig({...siteConfig, description: e.target.value})}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:border-cyan-500/50 outline-none h-24"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:border-cyan-500/50 outline-none h-24 transition-all"
                 />
               </section>
 
               <section className="space-y-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Liaison Google Sheets</label>
                 <div className="space-y-4">
-                  <input 
-                    type="text" 
-                    placeholder="URL de votre Google Sheets..."
-                    value={sheetUrl}
-                    onChange={(e) => setSheetUrl(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-sm"
-                  />
+                  <div className="relative group">
+                    <input 
+                      type="text" 
+                      placeholder="URL de partage ou de publication..."
+                      value={sheetUrl}
+                      onChange={(e) => setSheetUrl(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-sm text-cyan-100 placeholder:text-slate-700 focus:border-cyan-500 outline-none transition-all"
+                    />
+                    <LinkIcon className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-cyan-400 transition-colors" />
+                  </div>
                   <button 
                     onClick={handleConnect}
                     disabled={isLoadingData || !sheetUrl}
-                    className="w-full bg-slate-800 text-white font-black py-5 rounded-2xl text-xs flex items-center justify-center gap-3 border border-slate-700"
+                    className="w-full bg-slate-800 text-white font-black py-5 rounded-2xl text-xs flex items-center justify-center gap-3 border border-slate-700 hover:bg-slate-700 transition-all disabled:opacity-20"
                   >
                     {isLoadingData ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                     TESTER LA LIAISON
                   </button>
+                  <p className="text-[9px] text-slate-500 uppercase tracking-widest leading-relaxed text-center font-bold px-4">
+                    Astuce : Utilisez "Fichier > Partager > Publier sur le web" pour une compatibilité maximale.
+                  </p>
                 </div>
               </section>
 
@@ -241,17 +292,27 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aura Visuelle</label>
                 <div className="flex gap-4">
                   {['#06b6d4', '#a855f7', '#f43f5e', '#10b981'].map(c => (
-                    <button key={c} onClick={() => setSiteConfig({...siteConfig, primaryColor: c})} className={`w-12 h-12 rounded-xl ${siteConfig.primaryColor === c ? 'ring-4 ring-white/20 scale-110' : 'opacity-40'}`} style={{ backgroundColor: c }} />
+                    <button 
+                      key={c} 
+                      onClick={() => setSiteConfig({...siteConfig, primaryColor: c})} 
+                      className={`w-12 h-12 rounded-xl transition-all ${siteConfig.primaryColor === c ? 'ring-4 ring-white/20 scale-110' : 'opacity-40 hover:opacity-100'}`} 
+                      style={{ backgroundColor: c }} 
+                    />
                   ))}
                 </div>
               </section>
             </div>
 
-            <button onClick={handleClone} disabled={!isConnected || isExporting} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-black py-7 rounded-[2rem] flex flex-col items-center gap-1 shadow-2xl disabled:opacity-20">
+            <button 
+              onClick={handleClone} 
+              disabled={!isConnected || isExporting} 
+              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-black py-7 rounded-[2rem] flex flex-col items-center gap-1 shadow-2xl disabled:opacity-20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
               <div className="flex items-center gap-3">
                 {isExporting ? <Loader2 className="w-7 h-7 animate-spin" /> : <Files className="w-7 h-7" />}
-                <span className="text-2xl">CLONER LE SITE</span>
+                <span className="text-2xl tracking-tight">CLONER LE SITE</span>
               </div>
+              <span className="text-[9px] uppercase tracking-[0.3em] opacity-60">Générer l'archive ZIP</span>
             </button>
           </div>
         </div>
@@ -260,8 +321,8 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
         <div className="flex-1 space-y-6">
           <div className="flex items-center justify-between px-10">
             <div className="flex gap-4 bg-slate-900/50 p-2 rounded-2xl border border-slate-800">
-              <button onClick={() => setPreviewDevice('desktop')} className={`p-4 rounded-xl ${previewDevice === 'desktop' ? 'bg-slate-800 text-white' : 'text-slate-600'}`}><Monitor /></button>
-              <button onClick={() => setPreviewDevice('mobile')} className={`p-4 rounded-xl ${previewDevice === 'mobile' ? 'bg-slate-800 text-white' : 'text-slate-600'}`}><Smartphone /></button>
+              <button onClick={() => setPreviewDevice('desktop')} className={`p-4 rounded-xl transition-all ${previewDevice === 'desktop' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600 hover:text-white'}`}><Monitor /></button>
+              <button onClick={() => setPreviewDevice('mobile')} className={`p-4 rounded-xl transition-all ${previewDevice === 'mobile' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600 hover:text-white'}`}><Smartphone /></button>
             </div>
           </div>
 
@@ -270,8 +331,8 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
               <nav className="flex justify-between items-center mb-20">
                 <div className="text-2xl font-black" style={{ color: siteConfig.primaryColor }}>{siteConfig.title}</div>
                 <div className="flex gap-6 text-[10px] font-black uppercase text-slate-600">
-                  <span>Accueil</span>
-                  <span className="text-white">Bibliothèque</span>
+                  <span className="hover:text-white cursor-pointer transition-colors">Accueil</span>
+                  <span className="text-white cursor-pointer">Bibliothèque</span>
                 </div>
               </nav>
 
@@ -282,15 +343,17 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {isConnected ? previewData.map((row, i) => (
-                  <div key={i} className="bg-slate-900/40 border border-white/5 p-10 rounded-[3rem] hover:border-white/20 transition-all">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-700 mb-6">{row.meta}</div>
-                    <h4 className="text-2xl font-bold text-white mb-10">{row.title}</h4>
-                    <div className="text-xs font-black uppercase" style={{ color: siteConfig.primaryColor }}>DÉCRYPTER <ExternalLink className="inline w-4 h-4 ml-2" /></div>
+                  <div key={i} className="bg-slate-900/40 border border-white/5 p-10 rounded-[3rem] hover:border-white/20 transition-all cursor-default group">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-700 mb-6 group-hover:text-cyan-400 transition-colors">{row.meta}</div>
+                    <h4 className="text-2xl font-bold text-white mb-10 leading-tight">{row.title}</h4>
+                    <div className="text-xs font-black uppercase flex items-center gap-2" style={{ color: siteConfig.primaryColor }}>
+                      CONSULTER <ExternalLink className="w-4 h-4" />
+                    </div>
                   </div>
                 )) : (
-                  <div className="col-span-full py-48 text-center opacity-10">
-                    <Database className="w-24 h-24 mx-auto mb-6" />
-                    <p className="font-black uppercase tracking-widest">En attente de connexion...</p>
+                  <div className="col-span-full py-48 text-center opacity-10 flex flex-col items-center">
+                    <Database className="w-24 h-24 mb-6 animate-pulse" />
+                    <p className="font-black uppercase tracking-widest text-sm">Synchronisation requise...</p>
                   </div>
                 )}
               </div>

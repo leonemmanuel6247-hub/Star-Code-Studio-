@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserData } from '../types';
-import { ChevronLeft, AlertCircle, UserPlus, Sparkles, Loader2, ShieldCheck, Globe } from 'lucide-react';
+import { ChevronLeft, AlertCircle, UserPlus, Sparkles, Loader2, ShieldCheck, Globe, Zap } from 'lucide-react';
 
 interface Props {
   onSuccess: (data: UserData) => void;
@@ -48,29 +48,6 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
     }
   };
 
-  const logActivity = async (ip: string, fullName: string) => {
-    const LOG_URL = "https://script.google.com/macros/s/AKfycbxftG5yH2I2YXvlvDe3t4BpUey1CtH_rOgg_URtgpT8RYVEhcRq-ozCxLmpYSMLeeO9/exec";
-    const logData = {
-      timestamp: new Date().toISOString(),
-      nom: fullName,
-      action: 'Inscription Star Code Studio',
-      ip: ip,
-      userAgent: navigator.userAgent
-    };
-
-    try {
-      await fetch(LOG_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        cache: 'no-cache',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logData)
-      });
-    } catch (e) {
-      console.warn("Log furtif échoué, poursuite de l'inscription...");
-    }
-  };
-
   const validate = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) return "L'adresse email n'est pas valide.";
@@ -110,20 +87,30 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
     setError(null);
 
     try {
+      // 1. Détection de l'IP une seule fois
       const userIP = await getPublicIP();
       const fullName = `${formData.firstName} ${formData.lastName}`;
+      const timestamp = new Date().toLocaleString('fr-FR');
 
-      await logActivity(userIP, fullName);
-
-      const MAIN_DB_URL = "https://script.google.com/macros/s/AKfycbzsrXMlQelnu1hBgn-DPoplUJJx2rFi46Ru3PQ5iB_nVh_oUWHfKVO3KyTbnkVw3sxg/exec";
+      // 2. Préparation du payload UNIFIÉ pour éviter les doublons de lignes
+      // L'ordre des clés ici devrait correspondre à l'ordre souhaité dans tes colonnes Google Sheets
+      const UNIFIED_DB_URL = "https://script.google.com/macros/s/AKfycbzsrXMlQelnu1hBgn-DPoplUJJx2rFi46Ru3PQ5iB_nVh_oUWHfKVO3KyTbnkVw3sxg/exec";
+      
       const payload = {
+        // Colonnes A, B, C, D (Identité)
         nom: fullName,
         email: formData.email,
         classe: `${formData.classe} (${formData.country})`,
-        ip: userIP
+        ip: userIP,
+        
+        // Colonnes E, F, G (Données techniques en continuité)
+        dateInscription: timestamp,
+        navigateur: navigator.userAgent,
+        source: 'Star Code Studio Builder'
       };
 
-      await fetch(MAIN_DB_URL, {
+      // 3. Envoi unique
+      await fetch(UNIFIED_DB_URL, {
         method: 'POST',
         mode: 'no-cors',
         cache: 'no-cache',
@@ -131,6 +118,7 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
         body: JSON.stringify(payload)
       });
 
+      // 4. Succès local
       onSuccess({
         lastName: formData.lastName,
         firstName: formData.firstName,
@@ -140,7 +128,7 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
       });
 
     } catch (e) {
-      setError("Erreur de synchronisation avec la constellation SuccessPolaris.");
+      setError("Erreur de synchronisation. La constellation est temporairement hors de portée.");
     } finally {
       setIsSubmitting(false);
     }
@@ -162,33 +150,33 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
         
         <header className="mb-10 text-center relative z-10">
           <div className="inline-flex p-4 bg-cyan-500/10 rounded-3xl mb-6 ring-1 ring-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
-            <UserPlus className="text-cyan-400 w-8 h-8" />
+            <Zap className="text-cyan-400 w-8 h-8 animate-pulse" />
           </div>
           <h2 className="text-4xl font-heading font-black text-white tracking-tighter">Star Code <span className="text-cyan-400">ID</span></h2>
-          <p className="text-slate-500 mt-3 text-xs font-bold uppercase tracking-widest opacity-60">Initialisation de votre profil membre</p>
+          <p className="text-slate-500 mt-3 text-[9px] font-black uppercase tracking-[0.3em] opacity-60">Synchronisation stellaire unifiée</p>
         </header>
         
         <form id="signup-form" onSubmit={handleSubmit} className="space-y-6 relative z-10">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Prénom</label>
-              <input required id="firstName" type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 outline-none transition-all placeholder:text-slate-800" placeholder="Ex: Jean" />
+              <input required id="firstName" type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-cyan-500/50 outline-none transition-all placeholder:text-slate-800" placeholder="Prénom" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Nom</label>
-              <input required id="lastName" type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 outline-none transition-all placeholder:text-slate-800" placeholder="Ex: Dupont" />
+              <input required id="lastName" type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-cyan-500/50 outline-none transition-all placeholder:text-slate-800" placeholder="Nom" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Classe / Niveau</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Classe</label>
               <select value={formData.classe} onChange={e => setFormData({...formData, classe: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-cyan-500/50 cursor-pointer appearance-none transition-all">
                 {classes.map(c => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Localisation</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Pays</label>
               <select value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-cyan-500/50 cursor-pointer appearance-none transition-all">
                 <optgroup label="Afrique" className="bg-slate-900 text-cyan-400">
                   {africanCountries.map(c => <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>)}
@@ -210,7 +198,7 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Canal de communication (Email)</label>
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">Email</label>
             <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-cyan-500/50 outline-none transition-all placeholder:text-slate-800" placeholder="votre@email.com" />
           </div>
 
@@ -225,24 +213,24 @@ export const Signup: React.FC<Props> = ({ onSuccess, onBack }) => {
             <button 
               type="submit" 
               disabled={isSubmitting} 
-              className="w-full relative group overflow-hidden bg-white text-black font-black py-6 rounded-[2rem] flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full relative group overflow-hidden bg-white text-black font-black py-6 rounded-[2rem] flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50 shadow-[0_20px_40px_rgba(0,0,0,0.3)]"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />
-                  <span className="text-sm tracking-widest uppercase">Synchronisation...</span>
+                  <span className="text-sm tracking-widest uppercase">Liaison en cours...</span>
                 </>
               ) : (
                 <>
                   <ShieldCheck className="w-6 h-6 text-cyan-600" />
-                  <span className="text-sm tracking-widest uppercase">Finaliser mon Profil</span>
+                  <span className="text-sm tracking-widest uppercase">Bâtir mon Profil</span>
                   <Sparkles className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
                 </>
               )}
             </button>
-            <p className="text-center text-[9px] text-slate-600 mt-6 uppercase tracking-[0.3em] font-bold flex items-center justify-center gap-2">
-              <Globe className="w-3 h-3" /> Sécurisé par le protocole SuccessPolaris Cloud
+            <p className="text-center text-[8px] text-slate-600 mt-6 uppercase tracking-[0.4em] font-black flex items-center justify-center gap-2">
+              <Globe className="w-3 h-3" /> Données sécurisées sur une ligne unique
             </p>
           </div>
         </form>
