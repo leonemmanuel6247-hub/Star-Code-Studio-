@@ -9,8 +9,8 @@ import { Page, SiteConfig, UserData } from './types';
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
-    title: 'Mon Super Projet',
-    description: 'Une description captivante pour mon site vitrine futuriste.',
+    title: 'Nouveau Projet Stellaire',
+    description: 'Une description générée pour mon futur univers.',
     theme: 'neon',
     primaryColor: '#06b6d4',
     font: 'Space Grotesk',
@@ -52,11 +52,12 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#020617]">
-      {/* Background decoration */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600 rounded-full blur-[120px]"></div>
+    <div className="min-h-screen relative overflow-hidden bg-[#020617] font-['Inter']">
+      {/* Star Code Studio Background Decor */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-cyan-900/20 rounded-full blur-[160px]"></div>
+        <div className="absolute bottom-[-10%] right-[-20%] w-[50%] h-[50%] bg-purple-900/10 rounded-full blur-[140px]"></div>
+        <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] bg-blue-900/10 rounded-full blur-[120px]"></div>
       </div>
 
       <main className="relative z-10">
