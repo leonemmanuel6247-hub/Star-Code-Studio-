@@ -12,6 +12,7 @@
         font-family: 'Inter', sans-serif;
         background-color: #020617;
         color: #f8fafc;
+        margin: 0;
       }
       .font-heading {
         font-family: 'Space Grotesk', sans-serif;
@@ -32,21 +33,40 @@
       .neon-glow {
         box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
       }
+      /* Animation de chargement fallback si React met du temps */
+      #root:empty::before {
+        content: "INITIALISATION POLARIS...";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: 'Space Grotesk', sans-serif;
+        color: #06b6d4;
+        letter-spacing: 0.2em;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "jszip": "https://esm.sh/jszip@3.10.1"
-  }
-}
-</script>
-</head>
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://esm.sh/react-dom@19.0.0/",
+        "react/": "https://esm.sh/react@19.0.0/",
+        "react": "https://esm.sh/react@19.0.0",
+        "react-dom": "https://esm.sh/react-dom@19.0.0",
+        "@google/genai": "https://esm.sh/@google/genai@1.3.0",
+        "lucide-react": "https://esm.sh/lucide-react@0.460.0",
+        "jszip": "https://esm.sh/jszip@3.10.1"
+      }
+    }
+    </script>
+  </head>
   <body>
     <div id="root"></div>
+    <!-- Point d'entrée JavaScript CRITIQUE pour Vercel -->
+    <script type="module" src="index.tsx"></script>
   </body>
 </html>
