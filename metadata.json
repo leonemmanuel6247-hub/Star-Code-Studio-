@@ -1,0 +1,8 @@
+{
+  "name": "SuccessPolaris Builder",
+  "description": "Un générateur de sites statiques no-code futuriste avec assistant intelligent Polaris Brain intégré.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
