@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserData, SiteConfig } from '../types';
-import { ChevronLeft, ShieldCheck, Loader2, Crown } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, Loader2, UserCircle, Mail, GraduationCap } from 'lucide-react';
 import { APPS_SCRIPT_URL } from '../App';
 
 interface Props {
@@ -12,8 +12,9 @@ interface Props {
 
 export const Signup: React.FC<Props> = ({ siteConfig, onSuccess, onBack }) => {
   const [formData, setFormData] = useState({
-    firstName: '',
+    fullName: '',
     email: '',
+    grade: '',
     country: 'Togo'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +38,8 @@ export const Signup: React.FC<Props> = ({ siteConfig, onSuccess, onBack }) => {
         body: JSON.stringify({
           action: 'register',
           email: formData.email,
-          firstName: formData.firstName,
+          firstName: formData.fullName, // Stocké comme nom principal
+          grade: formData.grade,
           projectName: siteConfig.projectName,
           ip: ip,
           config: {
@@ -47,11 +49,11 @@ export const Signup: React.FC<Props> = ({ siteConfig, onSuccess, onBack }) => {
         })
       });
 
-      // Simulation de délai pour laisser GAS travailler
       setTimeout(() => {
         onSuccess({
-          firstName: formData.firstName,
+          firstName: formData.fullName,
           lastName: '',
+          grade: formData.grade,
           email: formData.email,
           country: formData.country,
           ip: ip,
@@ -59,7 +61,7 @@ export const Signup: React.FC<Props> = ({ siteConfig, onSuccess, onBack }) => {
           userAgent: navigator.userAgent
         });
         setIsSubmitting(false);
-      }, 2000);
+      }, 2500);
     } catch (e) {
       console.error(e);
       setIsSubmitting(false);
@@ -67,51 +69,70 @@ export const Signup: React.FC<Props> = ({ siteConfig, onSuccess, onBack }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-24 px-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <button onClick={onBack} className="text-slate-500 hover:text-white mb-10 flex items-center gap-2 uppercase font-black text-[10px] tracking-widest transition-colors">
+    <div className="max-w-2xl mx-auto py-20 px-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+      <button onClick={onBack} className="text-slate-500 hover:text-cyan-400 mb-12 flex items-center gap-2 uppercase font-black text-[10px] tracking-widest transition-all">
         <ChevronLeft className="w-4 h-4" /> Retour Studio
       </button>
 
-      <div className="bg-slate-900/60 border border-yellow-500/20 rounded-[4rem] p-12 backdrop-blur-3xl shadow-[0_0_50px_rgba(255,215,0,0.05)] relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-10 opacity-5 text-yellow-500"><Crown className="w-24 h-24" /></div>
-        
-        <header className="mb-12">
-          <h2 className="text-4xl font-black text-white tracking-tighter mb-2 uppercase italic">Accès <span className="text-yellow-500">Cloud</span></h2>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Déploiement sur l'architecture Polaris</p>
+      <div className="bg-slate-900/60 border border-cyan-500/20 rounded-[4rem] p-12 backdrop-blur-3xl shadow-[0_0_80px_rgba(6,182,212,0.1)] relative">
+        <header className="mb-14">
+          <h2 className="text-5xl font-black text-white tracking-tighter mb-4 uppercase italic">Séquence <span className="text-cyan-500">Initiale</span></h2>
+          <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] leading-relaxed">Enregistrement sur le noyau Astarté</p>
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-600 ml-5 tracking-widest">Identité de l'auteur</label>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-3">
+            <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-widest flex items-center gap-2">
+              <UserCircle className="w-3 h-3" /> Nom Complet
+            </label>
             <input 
               required 
-              value={formData.firstName} 
-              onChange={e => setFormData({...formData, firstName: e.target.value})} 
-              placeholder="Ex: Léon Emmanuel" 
-              className="w-full bg-black/40 border border-white/10 rounded-3xl px-8 py-6 text-white focus:border-yellow-500 outline-none transition-all" 
+              value={formData.fullName} 
+              onChange={e => setFormData({...formData, fullName: e.target.value})} 
+              placeholder="Ex: Jean-Luc Polaris" 
+              className="w-full bg-black/40 border border-white/10 rounded-3xl px-8 py-6 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-800" 
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-600 ml-5 tracking-widest">Email de gestion</label>
+          <div className="space-y-3">
+            <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-widest flex items-center gap-2">
+              <Mail className="w-3 h-3" /> Email de Gestion
+            </label>
             <input 
               required 
               type="email" 
               value={formData.email} 
               onChange={e => setFormData({...formData, email: e.target.value})} 
-              placeholder="votre@email.com" 
-              className="w-full bg-black/40 border border-white/10 rounded-3xl px-8 py-6 text-white focus:border-yellow-500 outline-none transition-all" 
+              placeholder="votre@base-donnees.com" 
+              className="w-full bg-black/40 border border-white/10 rounded-3xl px-8 py-6 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-800" 
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-[10px] font-black uppercase text-slate-600 ml-6 tracking-widest flex items-center gap-2">
+              <GraduationCap className="w-3 h-3" /> Niveau / Spécialité
+            </label>
+            <input 
+              required 
+              value={formData.grade} 
+              onChange={e => setFormData({...formData, grade: e.target.value})} 
+              placeholder="Ex: Terminale S / Master IT" 
+              className="w-full bg-black/40 border border-white/10 rounded-3xl px-8 py-6 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-800" 
             />
           </div>
 
           <button 
             disabled={isSubmitting}
-            className="w-full bg-yellow-500 text-black font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_40px_rgba(255,215,0,0.2)] group mt-10"
+            className="w-full bg-cyan-500 text-black font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_25px_50px_rgba(6,182,212,0.3)] group mt-10"
           >
-            {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
-            <span className="tracking-tighter uppercase">CRÉER MON EMPIRE</span>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : <ShieldCheck className="w-7 h-7" />}
+            <span className="tracking-tighter uppercase text-lg">ACTIVER LE CLONE</span>
           </button>
         </form>
+      </div>
+      
+      <div className="mt-12 text-center opacity-30 text-[9px] font-black uppercase tracking-[0.5em]">
+         Liaison IP: {ip || "Détection..."} • Signé Astarté
       </div>
     </div>
   );

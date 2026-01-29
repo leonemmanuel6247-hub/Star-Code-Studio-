@@ -4,7 +4,7 @@ export interface SiteConfig {
   title: string;
   description: string;
   testimonials: { author: string; text: string }[];
-  theme: 'neon' | 'golden' | 'cosmic' | 'forest' | 'indigo' | 'yellow' | 'white' | 'grey' | 'cherry' | 'red';
+  theme: 'neon' | 'golden' | 'cosmic' | 'forest' | 'indigo' | 'white' | 'grey' | 'cendre' | 'menthe' | 'cherry' | 'red';
   primaryColor: string;
   fontFamily: 'Outfit' | 'Space Grotesk' | 'Inter' | 'Fira Code' | 'Playfair Display';
   textColor: string;
@@ -22,15 +22,16 @@ export interface SiteConfig {
 export interface UserData {
   lastName: string;
   firstName: string;
+  grade?: string;
+  email: string;
+  country: string;
+  ip: string;
+  userAgent: string;
   birthDate: {
     day: number;
     month: number;
     year: number;
   };
-  email: string;
-  country: string;
-  ip: string;
-  userAgent: string;
 }
 
 export type Page = 'landing' | 'signup' | 'customization';

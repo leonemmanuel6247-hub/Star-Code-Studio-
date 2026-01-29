@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { MessageSquare, X, Send, Sparkles, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Loader2, Zap } from 'lucide-react';
 
 export const PolarisAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
-    { role: 'assistant', text: "Salutations ! Je suis Polaris Brain, ton architecte de succès. Comment puis-je t'aider à bâtir ton futur aujourd'hui ?" }
+    { role: 'assistant', text: "Salutations. Je suis l'intelligence de STAR CODE STUDIO. Je suis là pour magnifier votre projet. Comment puis-je vous assister dans le déploiement de votre clone ?" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,24 +27,21 @@ export const PolarisAssistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Corrected initialization to strictly follow guidelines: new GoogleGenAI({ apiKey: process.env.API_KEY })
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        // Simplified contents property for direct string prompt as per guidelines
         contents: userMsg,
         config: {
-          systemInstruction: "Tu es Polaris Brain, l'assistant intelligent du site SuccessPolaris. Ton but est d'aider les élèves avec leurs cours. Ton style est Futuriste, poli, extrêmement motivant et inspirant. Tu dois suggérer de consulter les fichiers PDF du site SuccessPolaris pour approfondir les sujets. Réponds toujours en français.",
+          systemInstruction: "Tu es Star Code Brain, l'intelligence derrière STAR CODE STUDIO. Ton but est d'aider les créateurs à magnifier leurs portails de ressources. Ton style est Prestigieux, Technologique, poli et extrêmement efficace. Tu mets en avant la sublimité et la performance de STAR CODE STUDIO, développé par Astarté. Réponds toujours en français.",
           temperature: 0.8,
         }
       });
 
-      // Directly accessing .text property (not a method) as per guidelines
-      const aiText = response.text || "Je rencontre une perturbation dans la matrice. Réessayons.";
+      const aiText = response.text || "Erreur de transmission Star Code.";
       setMessages(prev => [...prev, { role: 'assistant', text: aiText }]);
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'assistant', text: "Désolé, ma connexion avec la constellation SuccessPolaris a été interrompue." }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "Lien Star Code interrompu." }]);
     } finally {
       setIsLoading(false);
     }
@@ -53,24 +50,27 @@ export const PolarisAssistant: React.FC = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
-        <div className="w-80 sm:w-96 h-[500px] bg-slate-900/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
-          <div className="p-4 bg-gradient-to-r from-cyan-600 to-purple-600 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-cyan-200" />
-              <span className="font-heading font-bold text-white">Polaris Brain</span>
+        <div className="w-80 sm:w-96 h-[550px] bg-slate-900/90 backdrop-blur-3xl border border-cyan-500/30 rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="p-6 bg-gradient-to-r from-cyan-600 to-indigo-700 flex justify-between items-center shadow-lg">
+            <div className="flex items-center gap-3">
+              <Zap className="w-6 h-6 text-cyan-200 fill-cyan-200" />
+              <div className="flex flex-col">
+                <span className="font-heading font-black text-white uppercase tracking-tighter text-lg leading-none">Star Code Brain</span>
+                <span className="text-[8px] font-black text-cyan-200/60 uppercase tracking-widest mt-1">Noyau Astarté</span>
+              </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors">
+            <button onClick={() => setIsOpen(false)} className="bg-black/20 p-2 rounded-full text-white/80 hover:text-white hover:bg-black/40 transition-all">
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-xl text-sm ${
+                <div className={`max-w-[85%] p-5 rounded-[2rem] text-sm leading-relaxed shadow-sm ${
                   m.role === 'user' 
-                    ? 'bg-cyan-600 text-white rounded-tr-none' 
-                    : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
+                    ? 'bg-cyan-600 text-black font-bold rounded-tr-none' 
+                    : 'bg-slate-800/80 text-slate-200 border border-slate-700 rounded-tl-none'
                 }`}>
                   {m.text}
                 </div>
@@ -78,36 +78,40 @@ export const PolarisAssistant: React.FC = () => {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-slate-800 p-3 rounded-xl rounded-tl-none border border-slate-700">
-                  <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                <div className="bg-slate-800/80 p-5 rounded-[2rem] rounded-tl-none border border-slate-700">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-800 flex gap-2">
+          <div className="p-6 border-t border-slate-800 flex gap-3 bg-black/20">
             <input 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Pose une question à Polaris..."
-              className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+              placeholder="Question pour Star Code..."
+              className="flex-1 bg-slate-950/80 border border-slate-700 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-cyan-500 transition-colors placeholder:text-slate-700 italic"
             />
             <button 
               onClick={handleSend}
               disabled={isLoading}
-              className="bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-lg transition-colors disabled:opacity-50"
+              className="bg-cyan-500 hover:bg-cyan-400 text-black p-4 rounded-2xl transition-all shadow-lg disabled:opacity-50"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </div>
       ) : (
         <button 
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-br from-cyan-500 to-purple-600 p-4 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-white"
+          className="bg-cyan-500 p-5 rounded-full shadow-[0_20px_50px_rgba(6,182,212,0.4)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-black group"
         >
-          <MessageSquare className="w-6 h-6" />
+          <Zap className="w-7 h-7 fill-black group-hover:animate-pulse" />
         </button>
       )}
     </div>
