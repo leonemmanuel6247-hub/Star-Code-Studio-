@@ -1,144 +1,174 @@
 
 import React from 'react';
-import { Page } from '../types';
-import { Rocket, Sparkles, Shield, ArrowRight, Star, Code2, Database, Globe, Cpu } from 'lucide-react';
+import { SiteConfig } from '../types';
+import { 
+  ArrowRight, Palette, Sparkles, Plus, X, Monitor, 
+  Zap, Waves, Star, Layers, Box
+} from 'lucide-react';
 
 interface Props {
-  onNavigate: (page: Page) => void;
+  siteConfig: SiteConfig;
+  setSiteConfig: React.Dispatch<React.SetStateAction<SiteConfig>>;
+  onNavigate: () => void;
 }
 
-export const Landing: React.FC<Props> = ({ onNavigate }) => {
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Hero Section */}
-      <div className="text-center mb-24 space-y-8 animate-in fade-in slide-in-from-top-10 duration-1000">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-          <Code2 className="w-4 h-4" />
-          <span>Propulsé par Star Code Studio</span>
-        </div>
-        
-        <h1 className="text-6xl sm:text-9xl font-heading font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-slate-600 leading-[0.9]">
-          Star Code <br/><span className="text-cyan-400">Studio</span>
-        </h1>
-        
-        <p className="max-w-2xl mx-auto text-xl text-slate-400 font-light leading-relaxed">
-          L'architecte no-code pour cloner l'univers SuccessPolaris. <br/>
-          Bâtis ta propre bibliothèque de ressources en quelques secondes.
-        </p>
+export const Landing: React.FC<Props> = ({ siteConfig, setSiteConfig, onNavigate }) => {
+  const addTestimonial = () => {
+    setSiteConfig({
+      ...siteConfig,
+      testimonials: [...siteConfig.testimonials, { author: '', text: '' }]
+    });
+  };
 
-        <div className="flex justify-center pt-8">
-          <button 
-            onClick={() => onNavigate('signup')}
-            className="group relative px-12 py-6 bg-white text-black font-black rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <span className="relative flex items-center gap-3 text-lg tracking-tight">
-              COMMENCER L'AVENTURE
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
-        </div>
+  const updateTestimonial = (index: number, field: 'author' | 'text', value: string) => {
+    const newTestimonials = [...siteConfig.testimonials];
+    newTestimonials[index][field] = value;
+    setSiteConfig({ ...siteConfig, testimonials: newTestimonials });
+  };
+
+  const removeTestimonial = (index: number) => {
+    setSiteConfig({
+      ...siteConfig,
+      testimonials: siteConfig.testimonials.filter((_, i) => i !== index)
+    });
+  };
+
+  const themes: { id: SiteConfig['theme']; name: string; color: string }[] = [
+    { id: 'golden', name: 'Golden Galaxy', color: '#FFD700' },
+    { id: 'neon', name: 'Neon City', color: '#06b6d4' },
+    { id: 'cosmic', name: 'Cosmic Nebula', color: '#A855F7' },
+    { id: 'forest', name: 'Emerald Forest', color: '#10B981' }
+  ];
+
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-12 animate-in fade-in duration-1000 pb-32">
+      <div className="text-center mb-12">
+        <h1 className="text-7xl font-heading font-black text-white mb-4 tracking-tighter">
+          POLARIS <span style={{ color: siteConfig.primaryColor }}>STUDIO</span>
+        </h1>
+        <p className="text-slate-500 text-lg font-medium">Bâtissez votre empire éducatif sur mesure.</p>
       </div>
 
-      {/* Manifeste / But du site */}
-      <section className="mb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <h2 className="text-4xl font-heading font-black text-white leading-tight">
-              Pourquoi créer ton propre <br/>
-              <span className="text-cyan-400">Empire Digital ?</span>
-            </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* CONFIGURATION */}
+        <div className="lg:col-span-8 space-y-8">
+          <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl">
+            <div className="flex items-center gap-3 mb-6 text-white/80">
+              <Box className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-sm font-black uppercase tracking-widest">Identité du Projet</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input 
+                type="text" 
+                placeholder="Nom unique du projet (ex: MathsSup_2025)"
+                value={siteConfig.projectName}
+                onChange={(e) => setSiteConfig({...siteConfig, projectName: e.target.value})}
+                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-700 font-bold"
+              />
+              <input 
+                type="text" 
+                placeholder="Titre affiché sur le site"
+                value={siteConfig.title}
+                onChange={(e) => setSiteConfig({...siteConfig, title: e.target.value})}
+                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-700"
+              />
+            </div>
+            <textarea 
+              placeholder="Description du site..."
+              value={siteConfig.description}
+              onChange={(e) => setSiteConfig({...siteConfig, description: e.target.value})}
+              className="w-full mt-4 bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none h-24 resize-none placeholder:text-slate-700"
+            />
+          </section>
+
+          <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3 text-white/80">
+                <Plus className="w-5 h-5 text-cyan-400" />
+                <h2 className="text-sm font-black uppercase tracking-widest">Témoignages</h2>
+              </div>
+              <button onClick={addTestimonial} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all uppercase">Ajouter</button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {siteConfig.testimonials.map((t, i) => (
+                <div key={i} className="bg-black/40 p-5 rounded-2xl border border-white/5 group relative">
+                  <input 
+                    type="text" placeholder="Auteur" value={t.author}
+                    onChange={(e) => updateTestimonial(i, 'author', e.target.value)}
+                    className="w-full bg-transparent border-b border-white/5 text-white text-sm mb-2 outline-none focus:border-cyan-500 font-bold"
+                  />
+                  <input 
+                    type="text" placeholder="Citation..." value={t.text}
+                    onChange={(e) => updateTestimonial(i, 'text', e.target.value)}
+                    className="w-full bg-transparent text-slate-500 text-xs outline-none"
+                  />
+                  <button onClick={() => removeTestimonial(i)} className="absolute top-2 right-2 text-red-500/30 hover:text-red-500"><X className="w-4 h-4" /></button>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* STUDIO LATÉRAL */}
+        <div className="lg:col-span-4 space-y-8">
+          <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl sticky top-8">
+            <div className="flex items-center gap-3 mb-8 text-white/80">
+              <Palette className="w-5 h-5" />
+              <h2 className="text-sm font-black uppercase tracking-widest">Design Studio</h2>
+            </div>
+
             <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="mt-1 p-2 bg-cyan-500/10 rounded-lg h-fit"><Shield className="w-5 h-5 text-cyan-400" /></div>
-                <div>
-                  <h4 className="text-white font-bold mb-1">Indépendance Totale</h4>
-                  <p className="text-slate-500 text-sm leading-relaxed">Ne sois plus un simple visiteur. Deviens le propriétaire de ta plateforme de révision, personnalisée selon tes besoins.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="mt-1 p-2 bg-purple-500/10 rounded-lg h-fit"><Cpu className="w-5 h-5 text-purple-400" /></div>
-                <div>
-                  <h4 className="text-white font-bold mb-1">Automatisation Cloud</h4>
-                  <p className="text-slate-500 text-sm leading-relaxed">Mets à jour ton site simplement en modifiant un Google Sheets. Star Code Studio s'occupe de la synchronisation.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-slate-900/40 border border-white/5 p-8 rounded-[3rem] backdrop-blur-sm relative overflow-hidden group">
-            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition-all"></div>
-            <h3 className="text-cyan-400 font-black text-xs uppercase tracking-[0.3em] mb-6">Le But Ultime</h3>
-            <p className="text-slate-300 text-lg leading-relaxed italic">
-              "Notre mission est de démocratiser la création web pour les élèves de la constellation SuccessPolaris. Nous transformons tes données brutes en une expérience utilisateur premium, digne des plus grands sites de tech."
-            </p>
-            <div className="mt-8 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500"></div>
               <div>
-                <div className="text-white font-bold text-sm">Polaris Brain</div>
-                <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Intelligence Artificielle de Succès</div>
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-3 block">Thèmes Galactiques</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {themes.map(t => (
+                    <button 
+                      key={t.id}
+                      onClick={() => setSiteConfig({...siteConfig, theme: t.id})}
+                      className={`p-3 rounded-xl border transition-all text-center ${siteConfig.theme === t.id ? 'bg-white/10 border-white/20' : 'bg-transparent border-white/5 opacity-40'}`}
+                    >
+                      <div className="w-4 h-4 rounded-full mx-auto mb-1" style={{ backgroundColor: t.color }}></div>
+                      <span className="text-[8px] font-black uppercase text-white">{t.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                  <span className="flex items-center gap-1"><Zap className="w-3 h-3"/> Vitesse Constellation</span>
+                  <span className="text-white">{siteConfig.animationSpeed}x</span>
+                </div>
+                <input type="range" min="0.1" max="2" step="0.1" value={siteConfig.animationSpeed} onChange={(e) => setSiteConfig({...siteConfig, animationSpeed: parseFloat(e.target.value)})} className="w-full accent-cyan-500" />
+              </div>
+
+              <div>
+                 <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-3 block">Rendu du Fond</label>
+                 <div className="flex gap-2">
+                   {[
+                     { id: 'constellation', icon: Waves },
+                     { id: 'stars_only', icon: Sparkles },
+                     { id: 'static', icon: Layers }
+                   ].map(s => (
+                     <button key={s.id} onClick={() => setSiteConfig({...siteConfig, backgroundStyle: s.id as any})}
+                       className={`flex-1 p-3 rounded-xl border flex justify-center transition-all ${siteConfig.backgroundStyle === s.id ? 'bg-white text-black' : 'border-white/5 text-slate-500'}`}
+                     ><s.icon className="w-4 h-4" /></button>
+                   ))}
+                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Protocol / How it works */}
-      <section className="mb-32 space-y-16">
-        <div className="text-center">
-          <h2 className="text-3xl font-heading font-black text-white uppercase tracking-[0.2em]">Protocole de Création</h2>
-          <div className="h-1 w-20 bg-cyan-500 mx-auto mt-4 rounded-full"></div>
+            <button 
+              onClick={onNavigate}
+              disabled={!siteConfig.projectName}
+              className="w-full mt-10 py-6 rounded-[2rem] font-black text-lg tracking-tight uppercase flex items-center justify-center gap-3 transition-all hover:scale-[1.02] shadow-2xl disabled:opacity-20"
+              style={{ backgroundColor: siteConfig.primaryColor, color: siteConfig.theme === 'golden' ? 'black' : 'white' }}
+            >
+              Étape Suivante <ArrowRight className="w-5 h-5" />
+            </button>
+          </section>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            { 
-              step: "01", 
-              icon: <UserPlus className="w-8 h-8 text-cyan-400" />, 
-              title: "Identification", 
-              desc: "Inscris-toi sur la plateforme pour sécuriser ton accès au moteur de clonage." 
-            },
-            { 
-              step: "02", 
-              icon: <Database className="w-8 h-8 text-purple-400" />, 
-              title: "Liaison Data", 
-              desc: "Connecte ton Google Sheets. C'est le cerveau qui alimentera ta bibliothèque." 
-            },
-            { 
-              step: "03", 
-              icon: <Globe className="w-8 h-8 text-emerald-400" />, 
-              title: "Déploiement", 
-              desc: "Récupère ton code source prêt à l'emploi et brille sur le web mondial." 
-            }
-          ].map((item, i) => (
-            <div key={i} className="relative p-10 rounded-[2.5rem] bg-slate-900/20 border border-slate-800/50 group hover:border-cyan-500/30 transition-all">
-              <span className="absolute top-6 right-10 text-5xl font-black text-white/5 group-hover:text-cyan-500/10 transition-colors">{item.step}</span>
-              <div className="mb-6">{item.icon}</div>
-              <h3 className="text-xl font-heading font-bold mb-3 text-slate-100">{item.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features Grid (Footer-ish) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 opacity-40 hover:opacity-100 transition-opacity duration-700">
-        {[
-          { icon: <Shield className="text-emerald-400 w-5 h-5" />, title: "Accès Privé", desc: "Inscription obligatoire." },
-          { icon: <Star className="text-yellow-400 w-5 h-5" />, title: "ADN Polaris", desc: "Design System Premium." },
-          { icon: <Rocket className="text-purple-400 w-5 h-5" />, title: "Export ZIP", desc: "Code source complet." }
-        ].map((f, i) => (
-          <div key={i} className="flex items-center gap-4 p-6 rounded-2xl bg-slate-900/10 border border-slate-800/30">
-            {f.icon}
-            <div>
-              <h3 className="text-xs font-heading font-black uppercase text-slate-100">{f.title}</h3>
-              <p className="text-slate-600 text-[10px] uppercase font-bold tracking-widest">{f.desc}</p>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
 };
-
-// Import manquant pour les icônes de la liste
-import { UserPlus } from 'lucide-react';

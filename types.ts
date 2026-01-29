@@ -1,11 +1,20 @@
 
 export interface SiteConfig {
+  projectName: string;
   title: string;
   description: string;
-  theme: 'neon' | 'glass' | 'minimal' | 'cyber';
+  testimonials: { author: string; text: string }[];
+  theme: 'neon' | 'golden' | 'cosmic' | 'forest';
   primaryColor: string;
-  font: 'Inter' | 'Space Grotesk' | 'Outfit' | 'Fira Code';
-  layout: 'centered' | 'grid' | 'split';
+  animationSpeed: number;
+  particleDensity: number;
+  backgroundStyle: 'constellation' | 'stars_only' | 'static';
+  template: 'standard' | 'locked'; 
+  deploymentType: 'free' | 'premium';
+  registrationUrl: string; 
+  resourcesUrl: string;    
+  premiumSheetId?: string;
+  projectToken?: string;
 }
 
 export interface UserData {
@@ -18,13 +27,8 @@ export interface UserData {
   };
   email: string;
   country: string;
-}
-
-export interface SheetRow {
-  icon: string;
-  link: string;
-  fileName: string;
-  date: string;
+  ip: string;
+  userAgent: string;
 }
 
 export type Page = 'landing' | 'signup' | 'customization';
