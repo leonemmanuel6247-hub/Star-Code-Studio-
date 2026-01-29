@@ -7,9 +7,13 @@ import { PolarisAssistant } from './components/PolarisAssistant';
 import { GalaxyBackground } from './components/GalaxyBackground';
 import { Page, SiteConfig, UserData } from './types';
 
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzsrXMlQelnu1hBgn-DPoplUJJx2rFi46Ru3PQ5iB_nVh_oUWHfKVO3KyTbnkVw3sxg/exec";
+
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
+  const [isCheckingIP, setIsCheckingIP] = useState(true);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
+    projectName: '',
     title: 'SuccessPolaris Universe',
     description: 'La plateforme ultime pour réussir mes examens.',
     testimonials: [
@@ -22,11 +26,42 @@ const App: React.FC = () => {
     particleDensity: 80,
     backgroundStyle: 'constellation',
     template: 'standard',
-    deploymentType: 'free',
+    deploymentType: 'premium',
     registrationUrl: '',
     resourcesUrl: ''
   });
   const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    checkPersistence();
+  }, []);
+
+  const checkPersistence = async () => {
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipRes.json();
+      const res = await fetch(`${APPS_SCRIPT_URL}?ip=${ip}&action=check`);
+      const data = await res.json();
+      
+      if (data.found) {
+        setUser({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          country: data.country || 'Togo',
+          ip: ip,
+          birthDate: { day: 1, month: 1, year: 2000 },
+          userAgent: navigator.userAgent
+        });
+        setSiteConfig(prev => ({ ...prev, projectName: data.projectName || 'Projet_Existant' }));
+        setCurrentPage('customization');
+      }
+    } catch (e) {
+      console.error("Persistance check failed");
+    } finally {
+      setIsCheckingIP(false);
+    }
+  };
 
   useEffect(() => {
     const themeColors = {
@@ -37,6 +72,17 @@ const App: React.FC = () => {
     };
     setSiteConfig(prev => ({ ...prev, primaryColor: themeColors[siteConfig.theme] }));
   }, [siteConfig.theme]);
+
+  if (isCheckingIP) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-yellow-500 font-black tracking-widest text-[10px] uppercase">Synchronisation Polaris...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (currentPage) {

@@ -3,7 +3,7 @@ import React from 'react';
 import { SiteConfig } from '../types';
 import { 
   ArrowRight, Palette, Sparkles, Plus, X, Monitor, 
-  Zap, Waves, Star, Layers, Box
+  Zap, Waves, Star, Layers, Box, Crown, Layout
 } from 'lucide-react';
 
 interface Props {
@@ -42,74 +42,88 @@ export const Landing: React.FC<Props> = ({ siteConfig, setSiteConfig, onNavigate
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 animate-in fade-in duration-1000 pb-32">
-      <div className="text-center mb-12">
+      <div className="text-center mb-16">
         <h1 className="text-7xl font-heading font-black text-white mb-4 tracking-tighter">
           POLARIS <span style={{ color: siteConfig.primaryColor }}>STUDIO</span>
         </h1>
-        <p className="text-slate-500 text-lg font-medium">Bâtissez votre empire éducatif sur mesure.</p>
+        <p className="text-slate-500 text-lg font-medium">Configurez votre environnement de succès.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* CONFIGURATION */}
+        {/* SECTION GAUCHE : IDENTITÉ & OPTION */}
         <div className="lg:col-span-8 space-y-8">
           <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl">
             <div className="flex items-center gap-3 mb-6 text-white/80">
               <Box className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-sm font-black uppercase tracking-widest">Identité du Projet</h2>
+              <h2 className="text-sm font-black uppercase tracking-widest">Type de Service</h2>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <button 
+                onClick={() => setSiteConfig({...siteConfig, deploymentType: 'free'})}
+                className={`p-6 rounded-3xl border transition-all flex flex-col items-center gap-3 ${siteConfig.deploymentType === 'free' ? 'border-white bg-white/10 text-white' : 'border-white/5 text-slate-500'}`}
+              >
+                <Monitor className="w-6 h-6" />
+                <div className="text-center">
+                  <div className="text-xs font-black uppercase">Option Free</div>
+                  <div className="text-[9px] opacity-50">Lien Google Sheet Externe</div>
+                </div>
+              </button>
+              <button 
+                onClick={() => setSiteConfig({...siteConfig, deploymentType: 'premium'})}
+                className={`p-6 rounded-3xl border transition-all flex flex-col items-center gap-3 ${siteConfig.deploymentType === 'premium' ? 'border-yellow-500 bg-yellow-500/10 text-white' : 'border-white/5 text-slate-500'}`}
+              >
+                <Crown className="w-6 h-6 text-yellow-500" />
+                <div className="text-center">
+                  <div className="text-xs font-black uppercase">Option Premium</div>
+                  <div className="text-[9px] opacity-50 text-yellow-500/50">Gestion Cloud Polaris (Centralisée)</div>
+                </div>
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input 
                 type="text" 
-                placeholder="Nom unique du projet (ex: MathsSup_2025)"
+                placeholder="Identifiant du Projet (Nom Unique)"
                 value={siteConfig.projectName}
                 onChange={(e) => setSiteConfig({...siteConfig, projectName: e.target.value})}
-                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-700 font-bold"
+                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none font-bold placeholder:text-slate-700"
               />
               <input 
                 type="text" 
-                placeholder="Titre affiché sur le site"
+                placeholder="Titre de la plateforme"
                 value={siteConfig.title}
                 onChange={(e) => setSiteConfig({...siteConfig, title: e.target.value})}
-                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-700"
+                className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none"
               />
             </div>
-            <textarea 
-              placeholder="Description du site..."
-              value={siteConfig.description}
-              onChange={(e) => setSiteConfig({...siteConfig, description: e.target.value})}
-              className="w-full mt-4 bg-black/40 border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-cyan-500 outline-none h-24 resize-none placeholder:text-slate-700"
-            />
           </section>
 
           <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3 text-white/80">
-                <Plus className="w-5 h-5 text-cyan-400" />
-                <h2 className="text-sm font-black uppercase tracking-widest">Témoignages</h2>
-              </div>
-              <button onClick={addTestimonial} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all uppercase">Ajouter</button>
+            <div className="flex items-center gap-3 mb-6 text-white/80">
+              <Layout className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-sm font-black uppercase tracking-widest">Modèle de Site</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {siteConfig.testimonials.map((t, i) => (
-                <div key={i} className="bg-black/40 p-5 rounded-2xl border border-white/5 group relative">
-                  <input 
-                    type="text" placeholder="Auteur" value={t.author}
-                    onChange={(e) => updateTestimonial(i, 'author', e.target.value)}
-                    className="w-full bg-transparent border-b border-white/5 text-white text-sm mb-2 outline-none focus:border-cyan-500 font-bold"
-                  />
-                  <input 
-                    type="text" placeholder="Citation..." value={t.text}
-                    onChange={(e) => updateTestimonial(i, 'text', e.target.value)}
-                    className="w-full bg-transparent text-slate-500 text-xs outline-none"
-                  />
-                  <button onClick={() => removeTestimonial(i)} className="absolute top-2 right-2 text-red-500/30 hover:text-red-500"><X className="w-4 h-4" /></button>
-                </div>
-              ))}
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => setSiteConfig({...siteConfig, template: 'standard'})}
+                className={`p-6 rounded-3xl border transition-all text-center ${siteConfig.template === 'standard' ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-white/5 text-slate-500'}`}
+              >
+                <div className="text-xs font-black uppercase mb-1">Modèle A</div>
+                <div className="text-[9px] opacity-50">Accès Direct aux Cours</div>
+              </button>
+              <button 
+                onClick={() => setSiteConfig({...siteConfig, template: 'locked'})}
+                className={`p-6 rounded-3xl border transition-all text-center ${siteConfig.template === 'locked' ? 'border-red-500 bg-red-500/10 text-white' : 'border-white/5 text-slate-500'}`}
+              >
+                <div className="text-xs font-black uppercase mb-1">Modèle B</div>
+                <div className="text-[9px] opacity-50">Inscription Obligatoire (Gatekeeper)</div>
+              </button>
             </div>
           </section>
         </div>
 
-        {/* STUDIO LATÉRAL */}
+        {/* STUDIO LATÉRAL DESIGN */}
         <div className="lg:col-span-4 space-y-8">
           <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl sticky top-8">
             <div className="flex items-center gap-3 mb-8 text-white/80">
@@ -136,10 +150,10 @@ export const Landing: React.FC<Props> = ({ siteConfig, setSiteConfig, onNavigate
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
-                  <span className="flex items-center gap-1"><Zap className="w-3 h-3"/> Vitesse Constellation</span>
+                  <span className="flex items-center gap-1"><Zap className="w-3 h-3"/> Vitesse</span>
                   <span className="text-white">{siteConfig.animationSpeed}x</span>
                 </div>
-                <input type="range" min="0.1" max="2" step="0.1" value={siteConfig.animationSpeed} onChange={(e) => setSiteConfig({...siteConfig, animationSpeed: parseFloat(e.target.value)})} className="w-full accent-cyan-500" />
+                <input type="range" min="0.1" max="2" step="0.1" value={siteConfig.animationSpeed} onChange={(e) => setSiteConfig({...siteConfig, animationSpeed: parseFloat(e.target.value)})} className="w-full accent-yellow-500" />
               </div>
 
               <div>
