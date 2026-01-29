@@ -4,8 +4,10 @@ export interface SiteConfig {
   title: string;
   description: string;
   testimonials: { author: string; text: string }[];
-  theme: 'neon' | 'golden' | 'cosmic' | 'forest';
+  theme: 'neon' | 'golden' | 'cosmic' | 'forest' | 'indigo' | 'yellow' | 'white' | 'grey' | 'cherry' | 'red';
   primaryColor: string;
+  fontFamily: 'Outfit' | 'Space Grotesk' | 'Inter' | 'Fira Code' | 'Playfair Display';
+  textColor: string;
   animationSpeed: number;
   particleDensity: number;
   backgroundStyle: 'constellation' | 'stars_only' | 'static';

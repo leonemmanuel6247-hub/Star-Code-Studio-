@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { SiteConfig, UserData } from '../types';
 import { 
-  Database, Loader2, Files, ShieldCheck, Layout, Crown, 
-  Trash2, PlusCircle, ExternalLink, RefreshCw, Copy, CheckCircle2
+  Trash2, PlusCircle, ExternalLink, Download, Sparkles, 
+  Files, Palette, Settings, Globe, Loader2, Crown, Type, MousePointer2
 } from 'lucide-react';
 import JSZip from 'jszip';
+import { APPS_SCRIPT_URL } from '../App';
 
 interface Props {
   siteConfig: SiteConfig;
@@ -13,83 +14,54 @@ interface Props {
   user: UserData | null;
 }
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzsrXMlQelnu1hBgn-DPoplUJJx2rFi46Ru3PQ5iB_nVh_oUWHfKVO3KyTbnkVw3sxg/exec";
-
 export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user }) => {
   const [items, setItems] = useState<any[]>([]);
   const [newItem, setNewItem] = useState({ title: '', link: '', meta: 'PDF' });
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (user && !isInitialized) {
-      initializeProject();
-    }
+    if (user) fetchItems();
   }, [user]);
 
-  const initializeProject = async () => {
+  const fetchItems = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      // PourPremium : enregistrement sur le compte admin central
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'register',
-          email: user?.email,
-          projectName: siteConfig.projectName,
-          firstName: user?.firstName,
-          lastName: user?.lastName,
-          ip: user?.ip,
-          config: siteConfig
-        })
-      });
-      setIsInitialized(true);
-      fetchItems();
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=fetch&email=${user.email}&project=${siteConfig.projectName}`);
+      const data = await res.json();
+      setItems(data.items || []);
     } catch (e) {
-      console.error("SaaS Connection Error", e);
+      console.error("Erreur cloud.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchItems = async () => {
-    if (siteConfig.deploymentType === 'free' && !siteConfig.resourcesUrl) return;
-    setIsLoading(true);
-    try {
-      const url = siteConfig.deploymentType === 'premium' 
-        ? `${APPS_SCRIPT_URL}?action=fetch&email=${user?.email}&project=${siteConfig.projectName}`
-        : `${siteConfig.resourcesUrl}`; // Format CSV direct si Free
-      
-      const res = await fetch(url);
-      const data = await res.json();
-      setItems(data.items || []);
-      if (data.sheetId) setSiteConfig(prev => ({ ...prev, premiumSheetId: data.sheetId }));
-    } catch (e) {}
-    finally { setIsLoading(false); }
-  };
-
   const addItem = async () => {
-    if (!newItem.title || !newItem.link) return;
+    if (!newItem.title || !newItem.link || !user) return;
     setIsLoading(true);
     try {
       await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
+        cache: 'no-cache',
         body: JSON.stringify({
           action: 'update',
-          email: user?.email,
+          email: user.email,
           project: siteConfig.projectName,
           item: newItem
         })
       });
       setNewItem({ title: '', link: '', meta: 'PDF' });
-      setTimeout(fetchItems, 1000);
-    } catch (e) {}
+      setTimeout(fetchItems, 1500);
+    } catch (e) {
+      setIsLoading(false);
+    }
   };
 
   const removeItem = async (index: number) => {
+    if (!user) return;
     setIsLoading(true);
     try {
       await fetch(APPS_SCRIPT_URL, {
@@ -97,181 +69,242 @@ export const Customization: React.FC<Props> = ({ siteConfig, setSiteConfig, user
         mode: 'no-cors',
         body: JSON.stringify({
           action: 'delete',
-          email: user?.email,
+          email: user.email,
           project: siteConfig.projectName,
           index: index
         })
       });
       setTimeout(fetchItems, 1000);
-    } catch (e) {}
+    } catch (e) {
+      setIsLoading(false);
+    }
   };
 
-  const handleClone = async () => {
+  const themes: { id: SiteConfig['theme']; name: string; color: string }[] = [
+    { id: 'golden', name: 'Or', color: '#FFD700' },
+    { id: 'neon', name: 'Cyan', color: '#06b6d4' },
+    { id: 'cosmic', name: 'Cosmic', color: '#A855F7' },
+    { id: 'forest', name: 'Emerald', color: '#10B981' },
+    { id: 'indigo', name: 'Indigo', color: '#4F46E5' },
+    { id: 'yellow', name: 'Jaune', color: '#FACC15' },
+    { id: 'white', name: 'Blanc', color: '#FFFFFF' },
+    { id: 'grey', name: 'Gris', color: '#94A3B8' },
+    { id: 'cherry', name: 'Cerise', color: '#F43F5E' },
+    { id: 'red', name: 'Rouge', color: '#EF4444' }
+  ];
+
+  const fonts: SiteConfig['fontFamily'][] = [
+    'Outfit', 'Space Grotesk', 'Inter', 'Fira Code', 'Playfair Display'
+  ];
+
+  const textColors = [
+    { name: 'Pure White', value: '#FFFFFF' },
+    { name: 'Silver', value: '#CBD5E1' },
+    { name: 'Royal Gold', value: '#FDE047' },
+    { name: 'Deep Black', value: '#0F172A' },
+    { name: 'Soft Rose', value: '#FDA4AF' },
+    { name: 'Neon Cyan', value: '#67E8F9' }
+  ];
+
+  const handleDownload = async () => {
     setIsExporting(true);
     const zip = new JSZip();
     
-    const resourcesUrl = siteConfig.deploymentType === 'premium'
-      ? `https://docs.google.com/spreadsheets/d/${siteConfig.premiumSheetId}/export?format=csv`
-      : siteConfig.resourcesUrl;
-
-    const themeColors = {
-      neon: { bg: '#020617', primary: '#06b6d4', text: 'white' },
-      golden: { bg: '#000000', primary: '#FFD700', text: 'black' },
-      cosmic: { bg: '#0B0118', primary: '#A855F7', text: 'white' },
-      forest: { bg: '#061A14', primary: '#10B981', text: 'white' }
-    }[siteConfig.theme];
-
-    const cssContent = `
-      :root { --primary: ${themeColors.primary}; --bg: ${themeColors.bg}; }
-      * { box-sizing: border-box; font-family: 'Outfit', sans-serif; }
-      body { background: var(--bg); color: #f1f5f9; margin: 0; overflow-x: hidden; }
-      canvas { position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.5; }
-      .container { max-width: 1100px; margin: 0 auto; padding: 6rem 2rem; position: relative; z-index: 10; }
-      .glass { background: rgba(255,255,255,0.02); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.05); border-radius: 3rem; }
-      .btn-polaris { background: var(--primary); color: ${themeColors.text}; padding: 1.2rem 2.5rem; border-radius: 1.2rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: 0.3s; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
-      .card { padding: 3rem; transition: 0.4s; }
-      .card:hover { transform: translateY(-10px); border-color: var(--primary); }
-      .gatekeeper { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-      .hidden { display: none !important; }
-    `;
-
     const indexHTML = `<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8"><title>${siteConfig.title}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${siteConfig.title} | SuccessPolaris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&family=Space+Grotesk:wght@300;700&family=Inter:wght@400;900&family=Fira+Code:wght@400;700&family=Playfair+Display:wght@400;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+          --accent: ${siteConfig.primaryColor}; 
+          --bg: #000; 
+          --text: ${siteConfig.textColor};
+          --font: '${siteConfig.fontFamily}', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
+        .galaxy { position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, #111 0%, #000 100%); z-index: -1; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 8rem 2rem; }
+        header { text-align: center; margin-bottom: 8rem; }
+        h1 { font-size: 5rem; font-weight: 900; letter-spacing: -0.05em; margin: 0; color: var(--accent); text-transform: uppercase; line-height: 0.9; }
+        p.desc { opacity: 0.6; margin-top: 1.5rem; font-size: 1.1rem; max-width: 600px; margin-inline: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 2.5rem; padding: 3rem; backdrop-filter: blur(20px); transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .card:hover { border-color: var(--accent); transform: translateY(-10px); }
+        .tag { font-size: 0.6rem; font-weight: 900; color: var(--accent); opacity: 0.8; letter-spacing: 0.3em; margin-bottom: 1rem; display: block; text-transform: uppercase; }
+        h3 { font-size: 1.6rem; font-weight: 900; margin-bottom: 2.5rem; line-height: 1.2; text-transform: uppercase; }
+        .btn { background: var(--accent); color: #000; padding: 1.2rem 2rem; border-radius: 1.2rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; transition: 0.3s; }
+        footer { margin-top: 10rem; text-align: center; opacity: 0.2; font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; font-weight: 900; }
+    </style>
 </head>
 <body>
-    ${siteConfig.template === 'locked' ? `
-    <div id="gate" class="gatekeeper">
-        <div class="glass" style="max-width:400px; padding:3rem; text-align:center;">
-            <h2 style="color:var(--primary); font-size:2rem; margin-bottom:1rem; font-weight:900;">ACCÈS RÉSERVÉ</h2>
-            <input type="text" id="name" placeholder="Votre Nom" style="width:100%; padding:1rem; border-radius:1rem; border:1px solid #ffffff10; background:#000; color:#fff; margin-bottom:1rem; text-align:center;">
-            <button onclick="unlock()" class="btn-polaris" style="width:100%; justify-content:center;">DÉBLOQUER</button>
-        </div>
-    </div>` : ''}
+    <div class="galaxy"></div>
     <div class="container">
-        <h1 style="font-size: 3.5rem; color: var(--primary); text-align:center; font-weight:900;">${siteConfig.title}</h1>
-        <div id="grid" class="grid" style="margin-top:5rem;"></div>
+        <header>
+            <h1 id="title">${siteConfig.title}</h1>
+            <p class="desc">${siteConfig.description}</p>
+        </header>
+        <div id="content" class="grid"></div>
+        <footer>Propulsé par SuccessPolaris Remote Engine</footer>
     </div>
     <script>
-        const RES_URL = "${resourcesUrl}";
-        async function load() {
-            const res = await fetch(RES_URL);
-            const csv = await res.text();
-            const rows = csv.split(/\\r?\\n/).slice(1);
-            document.getElementById('grid').innerHTML = rows.map(line => {
-                const c = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if(!c[0]) return '';
-                return \`<div class="glass card">
-                    <div style="font-size:0.6rem; color:var(--primary); font-weight:900; margin-bottom:1rem;">\${(c[2]||'PDF').replace(/^"|"$/g,'')}</div>
-                    <h3 style="margin-bottom:2rem; font-weight:900;">\${c[0].replace(/^"|"$/g,'')}</h3>
-                    <a href="\${(c[1]||'#').replace(/^"|"$/g,'')}" target="_blank" class="btn-polaris">OUVRIR</a>
-                </div>\`;
-            }).join('');
+        async function sync() {
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const { ip } = await ipRes.json();
+                const res = await fetch("${APPS_SCRIPT_URL}?action=fetchByIP&ip=" + ip);
+                const data = await res.json();
+                const grid = document.getElementById('content');
+                grid.innerHTML = (data.items || []).map(item => \`
+                    <div class="card">
+                        <span class="tag">\${item.meta}</span>
+                        <h3>\${item.title}</h3>
+                        <a href="\${item.link}" target="_blank" class="btn">Visualiser</a>
+                    </div>
+                \`).join('');
+                if(data.projectName) document.getElementById('title').innerText = data.projectName;
+            } catch(e) { console.error(e); }
         }
-        function unlock() {
-            if(document.getElementById('name').value.length > 2) {
-                localStorage.setItem('unlocked_${siteConfig.projectName}', 'true');
-                document.getElementById('gate').classList.add('hidden');
-                load();
-            }
-        }
-        if(localStorage.getItem('unlocked_${siteConfig.projectName}') || "${siteConfig.template}" === "standard") {
-            if(document.getElementById('gate')) document.getElementById('gate').classList.add('hidden');
-            load();
-        }
+        sync();
     </script>
 </body>
 </html>`;
 
     zip.file("index.html", indexHTML);
-    zip.file("style.css", cssContent);
     const blob = await zip.generateAsync({ type: "blob" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `SuccessPolaris_${siteConfig.projectName}.zip`;
+    a.download = `POLARIS_${siteConfig.projectName}.zip`;
     a.click();
     setIsExporting(false);
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 animate-in fade-in duration-700">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* DASHBOARD GESTION */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="bg-slate-900/60 border border-white/5 rounded-[3rem] p-8 backdrop-blur-3xl shadow-2xl relative">
-            <div className="absolute top-8 right-8 flex items-center gap-2 text-emerald-400 text-[9px] font-black uppercase">
-              <CheckCircle2 className="w-4 h-4" /> Persistance Active (IP)
-            </div>
-            
-            <header className="flex items-center gap-4 mb-10">
-              <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20"><Database className="text-yellow-500" /></div>
-              <div>
-                <h2 className="text-2xl font-black text-white tracking-tighter uppercase">{siteConfig.projectName}</h2>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{siteConfig.deploymentType === 'premium' ? 'Cloud Polaris Admin' : 'Sheet Externe'}</p>
+        {/* PANEL EDITION */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="bg-slate-900/60 border border-white/5 rounded-[4rem] p-12 backdrop-blur-3xl shadow-2xl relative overflow-hidden">
+            <header className="flex items-center justify-between mb-16">
+              <div className="flex items-center gap-6">
+                <div className="p-5 bg-yellow-500/10 rounded-3xl border border-yellow-500/20">
+                  <Globe className="text-yellow-500 w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-4xl font-black tracking-tighter uppercase italic">{siteConfig.projectName || "PROJET"}</h2>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">SuccessPolaris Cloud Studio</p>
+                </div>
               </div>
             </header>
 
-            {siteConfig.deploymentType === 'premium' ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                  <input value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} placeholder="Nom du PDF..." className="md:col-span-5 bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm" />
-                  <input value={newItem.link} onChange={e => setNewItem({...newItem, link: e.target.value})} placeholder="Lien Drive/PDF..." className="md:col-span-5 bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm" />
-                  <button onClick={addItem} disabled={isLoading} className="md:col-span-2 bg-yellow-500 text-black rounded-2xl flex items-center justify-center hover:scale-105 transition-all">
-                    <PlusCircle className="w-6 h-6" />
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                  {items.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-white/5 border border-white/5 p-4 rounded-2xl group transition-all">
-                      <div className="text-white font-bold text-xs">{item.title}</div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => removeItem(idx)} className="p-2 text-red-500/50 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase text-slate-500">Lien Google Sheet (Publié en CSV)</label>
+            <div className="space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-white/5 rounded-[2.5rem] border border-white/10">
                 <input 
-                  type="text" 
-                  value={siteConfig.resourcesUrl} 
-                  onChange={e => setSiteConfig({...siteConfig, resourcesUrl: e.target.value})}
-                  placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv"
-                  className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white text-sm"
+                  value={newItem.title} 
+                  onChange={e => setNewItem({...newItem, title: e.target.value})} 
+                  placeholder="Nom de la ressource..." 
+                  className="md:col-span-5 bg-transparent border-none px-6 py-4 text-sm focus:ring-0 outline-none font-bold uppercase placeholder:text-slate-700" 
                 />
+                <input 
+                  value={newItem.link} 
+                  onChange={e => setNewItem({...newItem, link: e.target.value})} 
+                  placeholder="Lien PDF..." 
+                  className="md:col-span-5 bg-transparent border-none px-6 py-4 text-sm focus:ring-0 outline-none placeholder:text-slate-700" 
+                />
+                <button onClick={addItem} className="md:col-span-2 bg-yellow-500 text-black rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                  <PlusCircle className="w-7 h-7" />
+                </button>
               </div>
-            )}
+
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-3 custom-scrollbar">
+                {items.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white/5 border border-white/5 p-6 rounded-[2rem] hover:border-yellow-500/30 transition-all backdrop-blur-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[8px] font-black text-yellow-500 uppercase mb-1.5 tracking-widest">{item.meta}</div>
+                      <div className="font-bold text-sm truncate pr-8 uppercase tracking-tight">{item.title}</div>
+                    </div>
+                    <div className="flex gap-3">
+                      <a href={item.link} target="_blank" className="p-4 bg-white/5 rounded-2xl text-slate-600 hover:text-white transition-all"><ExternalLink className="w-4 h-4" /></a>
+                      <button onClick={() => removeItem(idx)} className="p-4 bg-red-500/5 rounded-2xl text-red-500/30 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ACTIONS & EXPORT */}
-        <div className="lg:col-span-4 space-y-6">
-          <section className="bg-slate-900/60 border border-white/5 rounded-[3rem] p-8 shadow-2xl backdrop-blur-3xl">
-            <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-8">Résumé Configuration</h3>
-            <div className="space-y-4 mb-10">
-              <div className="flex justify-between items-center"><span className="text-slate-500 text-[10px] uppercase font-bold">Modèle :</span> <span className="text-white font-black uppercase text-xs">{siteConfig.template === 'standard' ? 'A (Libre)' : 'B (Locked)'}</span></div>
-              <div className="flex justify-between items-center"><span className="text-slate-500 text-[10px] uppercase font-bold">Service :</span> <span className="text-yellow-500 font-black uppercase text-xs">{siteConfig.deploymentType}</span></div>
+        {/* SIDEBAR PERSONNALISATION */}
+        <div className="lg:col-span-4 space-y-8">
+          <section className="bg-slate-900/60 border border-white/5 rounded-[4rem] p-10 shadow-2xl backdrop-blur-3xl">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] mb-8 flex items-center gap-3">
+              <Palette className="w-4 h-4 text-yellow-500" /> Thèmes Galactiques
+            </h3>
+            <div className="grid grid-cols-2 gap-2 mb-10">
+              {themes.map(t => (
+                <button 
+                  key={t.id}
+                  onClick={() => setSiteConfig({...siteConfig, theme: t.id, primaryColor: t.color})}
+                  className={`p-3 rounded-2xl border flex flex-col items-center gap-2 transition-all ${siteConfig.theme === t.id ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5 opacity-40 hover:opacity-100'}`}
+                >
+                  <div className="w-5 h-5 rounded-full" style={{ backgroundColor: t.color }}></div>
+                  <span className="text-[7px] font-black uppercase tracking-widest">{t.name}</span>
+                </button>
+              ))}
             </div>
 
-            <button onClick={handleClone} disabled={isExporting} className="w-full bg-white text-black font-black py-7 rounded-[2rem] flex items-center justify-center gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95">
-               {isExporting ? <Loader2 className="animate-spin" /> : <Files className="w-6 h-6" />}
-               DÉPLOYER MON SITE
-            </button>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
+              <Type className="w-4 h-4 text-yellow-500" /> Typographie
+            </h3>
+            <div className="grid grid-cols-1 gap-2 mb-10">
+              {fonts.map(f => (
+                <button 
+                  key={f}
+                  onClick={() => setSiteConfig({...siteConfig, fontFamily: f})}
+                  className={`px-6 py-4 rounded-2xl border text-left text-xs transition-all ${siteConfig.fontFamily === f ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5 opacity-40'}`}
+                  style={{ fontFamily: f }}
+                >
+                  {f} - SuccessPolaris
+                </button>
+              ))}
+            </div>
+
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
+              <MousePointer2 className="w-4 h-4 text-yellow-500" /> Couleur d'Écriture
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {textColors.map(c => (
+                <button 
+                  key={c.value}
+                  onClick={() => setSiteConfig({...siteConfig, textColor: c.value})}
+                  className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-1 ${siteConfig.textColor === c.value ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5'}`}
+                >
+                  <div className="w-4 h-4 rounded-md shadow-sm border border-white/10" style={{ backgroundColor: c.value }}></div>
+                  <span className="text-[6px] font-black uppercase truncate w-full text-center">{c.name}</span>
+                </button>
+              ))}
+            </div>
           </section>
 
-          <button onClick={() => window.location.reload()} className="w-full py-4 text-slate-500 text-[9px] font-black uppercase tracking-widest hover:text-white transition-colors">
-            Réinitialiser la session
-          </button>
+          <section className="bg-slate-900/60 border border-white/5 rounded-[4rem] p-10 shadow-2xl backdrop-blur-3xl">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] mb-10 flex items-center gap-3">
+              <Settings className="w-4 h-4 text-yellow-500" /> Déploiement
+            </h3>
+            <button 
+              onClick={handleDownload} 
+              disabled={isExporting} 
+              className="w-full bg-white text-black font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 hover:scale-[1.03] transition-all"
+            >
+              {isExporting ? <Loader2 className="animate-spin" /> : <Download className="w-6 h-6" />}
+              <span className="tracking-tighter uppercase">GÉNÉRER MON SITE</span>
+            </button>
+          </section>
         </div>
+
       </div>
     </div>
   );

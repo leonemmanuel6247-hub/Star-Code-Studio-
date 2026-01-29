@@ -27,18 +27,19 @@ export const PolarisAssistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      // Corrected initialization to strictly follow guidelines: new GoogleGenAI({ apiKey: process.env.API_KEY })
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [
-          { role: 'user', parts: [{ text: userMsg }] }
-        ],
+        // Simplified contents property for direct string prompt as per guidelines
+        contents: userMsg,
         config: {
           systemInstruction: "Tu es Polaris Brain, l'assistant intelligent du site SuccessPolaris. Ton but est d'aider les élèves avec leurs cours. Ton style est Futuriste, poli, extrêmement motivant et inspirant. Tu dois suggérer de consulter les fichiers PDF du site SuccessPolaris pour approfondir les sujets. Réponds toujours en français.",
           temperature: 0.8,
         }
       });
 
+      // Directly accessing .text property (not a method) as per guidelines
       const aiText = response.text || "Je rencontre une perturbation dans la matrice. Réessayons.";
       setMessages(prev => [...prev, { role: 'assistant', text: aiText }]);
     } catch (error) {
